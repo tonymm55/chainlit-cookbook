@@ -11,43 +11,46 @@ client = AsyncOpenAI(api_key=api_key)
 
 MAX_ITER = 5
 
-
-# Example dummy function hard coded to return the same weather
-# In production, this could be your backend API or an external API
-def get_current_weather(location, unit):
-    """Get the current weather in a given location"""
-    unit = unit or "Farenheit"
-    weather_info = {
-        "location": location,
-        "temperature": "72",
-        "unit": unit,
-        "forecast": ["sunny", "windy"],
+def get_office_opening_hours(day, hour):
+    """Check if the office is open or closed"""
+    opening_hours = {
+        "Monday": range(8, 20),
+        "Tuesday": range(8, 20),
+        "Wednesday": range(8, 20),
+        "Thursday": range(8, 20),
+        "Friday": range(8, 20),
+        "Saturday": range(8, 20),
+        "Sunday": range(8, 20)
     }
 
-    return json.dumps(weather_info)
-
+    if day in opening_hours and hour in opening_hours[day]:
+        return "The office is open."
+    else:
+        return "The office is closed."
 
 tools = [
     {
         "type": "function",
         "function": {
-            "name": "get_current_weather",
-            "description": "Get the current weather in a given location",
+            "name": "get_office_opening_hours",
+            "description": "Check if the office is open or closed",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "location": {
+                    "day": {
                         "type": "string",
-                        "description": "The city and state, e.g. San Francisco, CA",
+                        "description": "The day of the week (e.g., 'Monday', 'Tuesday', etc.)",
                     },
-                    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+                    "hour": {
+                        "type": "integer",
+                        "description": "The hour of the day (24-hour format)",
+                    },
                 },
-                "required": ["location"],
+                "required": ["day", "hour"],
             },
         },
-    }
+    },
 ]
-
 
 @cl.on_chat_start
 def start_chat():
@@ -55,7 +58,6 @@ def start_chat():
         "message_history",
         [{"role": "system", "content": "You are a helpful assistant."}],
     )
-
 
 @cl.step(type="tool")
 async def call_tool(tool_call, message_history):
@@ -67,13 +69,16 @@ async def call_tool(tool_call, message_history):
 
     current_step.input = arguments
 
-    function_response = get_current_weather(
-        location=arguments.get("location"),
-        unit=arguments.get("unit"),
+    if function_name == "get_office_opening_hours":
+      function_response = get_office_opening_hours(
+        day=arguments.get("day"),
+        hour=arguments.get("hour"),
     )
+    else:
+      function_response = "Function not found."
 
     current_step.output = function_response
-    current_step.language = "json"
+    current_step.language = "text"
 
     message_history.append(
         {
