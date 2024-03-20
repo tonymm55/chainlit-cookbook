@@ -112,6 +112,7 @@ async def call_gpt4(message_history):
     response = await client.chat.completions.create(
         messages=message_history, **settings
     )
+    print(response)
 
     message = response.choices[0].message
 

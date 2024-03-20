@@ -40,22 +40,11 @@ tools = [
 
 user_prompt = "Can you suggest an appointment today or tomorrow within opening and closing times for that day?"
 
-# completion = client.chat.completions.create(
-#     model="gpt-4",
-#     messages=[{"role": "user", "content": user_prompt}],
-#     functions=tools,
-#     function_call="auto"
-# )
-# output = completion.choices[0].message
-# print(output)
-
 completion = client.chat.completions.create(
     model="gpt-4",
     messages=[{"role": "user", "content": user_prompt}],
     functions=tools,
 function_call="auto")
-  
-output = completion.choices[0].message
 
 output = completion.choices[0].message
 print(output)
@@ -82,16 +71,10 @@ def get_business_hours(day=None):
   
 office_hours = get_business_hours()
 
-monday = json.loads(output.function_call.arguments).get("open")
 params = json.loads(output.function_call.arguments)
-type(params)
-
-print(monday)
-print(params)
 
 chosen_function = eval(output.function_call.name)
 office_hours=chosen_function()
-print(office_hours)
 
 def is_office_open():
     office_hours_json = get_business_hours()
@@ -171,7 +154,7 @@ print("Sunday office hours:", sunday_hours)
 def start_chat():
     cl.user_session.set(
         "message_history",
-        [{"role": "system", "content": "You are a helpful assistant."}],
+        [{"role": "system", "content": "You are a helpful appointment setting assistant. You know the business hours"}],
     )
 
 @cl.step(type="tool")
